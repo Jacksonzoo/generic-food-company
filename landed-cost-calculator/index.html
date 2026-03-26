@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Landed Cost Calculator — A&amp;D</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #f4f6f8;
+      color: #1a1a2e;
+      padding: 1.5rem;
+    }
+
+    h1 { font-size: 1.4rem; margin-bottom: 1rem; color: #2d6a4f; }
+    h2 { font-size: 1rem; margin-bottom: 0.5rem; color: #2d6a4f; }
+
+    .card {
+      background: #fff;
+      border-radius: 8px;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+
+    fieldset { border: none; padding: 0; margin-bottom: 1rem; }
+    legend { font-weight: 600; font-size: 0.95rem; margin-bottom: 0.6rem; color: #2d6a4f; }
+
+    .field-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.55rem;
+      flex-wrap: wrap;
+    }
+
+    label { min-width: 200px; font-size: 0.88rem; }
+    input[type="number"], input[type="text"], select {
+      padding: 0.3rem 0.5rem;
+      border: 1px solid #c4c9d4;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      width: 140px;
+    }
+
+    .row-2col { display: flex; gap: 2rem; flex-wrap: wrap; }
+    .row-2col fieldset { flex: 1; min-width: 280px; }
+
+    button[type="submit"] {
+      background: #2d6a4f;
+      color: #fff;
+      border: none;
+      padding: 0.65rem 2rem;
+      border-radius: 6px;
+      font-size: 1rem;
+      cursor: pointer;
+      margin-top: 0.5rem;
+    }
+    button[type="submit"]:hover { background: #1b4332; }
+
+    /* Results */
+    .summary-card, .results-card, .tieout-card, .details-card, .entree-card {
+      background: #fff;
+      border-radius: 8px;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+
+    .summary-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    .summary-table th, .summary-table td {
+      padding: 0.35rem 0.6rem;
+      border-bottom: 1px solid #eef0f4;
+      text-align: left;
+    }
+    .summary-table th { color: #555; font-weight: 500; width: 55%; }
+
+    .results-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    .results-table th, .results-table td {
+      padding: 0.4rem 0.6rem;
+      border-bottom: 1px solid #eef0f4;
+      text-align: left;
+    }
+    .results-table th { background: #f0f4f0; font-weight: 600; }
+
+    .final-cost { font-size: 1rem; color: #1b4332; }
+    .formula { color: #666; font-size: 0.8rem; }
+
+    .copy-btn {
+      background: #e8f5e9;
+      border: 1px solid #a5d6a7;
+      border-radius: 4px;
+      padding: 0.15rem 0.5rem;
+      cursor: pointer;
+      font-size: 0.78rem;
+      margin-left: 0.5rem;
+    }
+    .copy-btn:hover { background: #c8e6c9; }
+
+    pre#entree-block {
+      background: #f4f6f8;
+      padding: 0.75rem 1rem;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      margin-bottom: 0.5rem;
+      white-space: pre-wrap;
+    }
+
+    #copy-entree-btn {
+      background: #2d6a4f;
+      color: #fff;
+      border: none;
+      padding: 0.4rem 1.2rem;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 0.88rem;
+    }
+    #copy-entree-btn:hover { background: #1b4332; }
+
+    .error-box {
+      background: #fff3cd;
+      border: 1px solid #ffc107;
+      border-radius: 6px;
+      padding: 0.75rem 1rem;
+      margin-bottom: 0.75rem;
+      font-size: 0.9rem;
+    }
+    .warn-box {
+      background: #fff8e1;
+      border: 1px solid #ffe082;
+      border-radius: 6px;
+      padding: 0.75rem 1rem;
+      margin-bottom: 0.75rem;
+      font-size: 0.88rem;
+    }
+    ul { padding-left: 1.2rem; }
+
+    details summary { cursor: pointer; font-size: 0.88rem; color: #2d6a4f; font-weight: 500; }
+    details[open] .summary-table { margin-top: 0.75rem; }
+
+    .settings-row { display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap; font-size: 0.85rem; color: #555; }
+    .settings-row label { min-width: unset; }
+    .settings-row input, .settings-row select { width: 80px; }
+
+    @media (max-width: 600px) {
+      .row-2col { flex-direction: column; }
+      label { min-width: unset; width: 100%; }
+      input[type="number"], select { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+<h1>Landed Cost Calculator</h1>
+
+<!-- Settings bar -->
+<div class="card">
+  <div class="settings-row">
+    <label>Default freight rate ($/lb):
+      <input type="number" id="s-rate" step="0.01" min="0" />
+    </label>
+    <label>Default wetlock $/case:
+      <input type="number" id="s-wetlock" step="0.01" min="0" />
+    </label>
+    <label>Decimal places:
+      <select id="s-decimals">
+        <option value="4">4</option>
+        <option value="6">6</option>
+        <option value="7" selected>7</option>
+        <option value="10">10</option>
+      </select>
+    </label>
+    <button id="save-settings-btn" style="background:#2d6a4f;color:#fff;border:none;padding:0.3rem 0.8rem;border-radius:4px;cursor:pointer;font-size:0.82rem;">Save defaults</button>
+  </div>
+</div>
+
+<form id="calc-form">
+  <div class="card">
+    <fieldset>
+      <legend>Shipment</legend>
+
+      <div class="field-row">
+        <label for="po">PO #</label>
+        <input type="text" id="po" placeholder="e.g. 89601" />
+      </div>
+
+      <div class="field-row">
+        <label for="freight-mode">Freight input mode</label>
+        <select id="freight-mode">
+          <option value="weight">Weight × Rate</option>
+          <option value="dollars">Freight $ (manual)</option>
+        </select>
+      </div>
+
+      <div id="weight-inputs">
+        <div class="field-row">
+          <label for="billing-weight">Billing weight (lbs)</label>
+          <input type="number" id="billing-weight" step="0.01" min="0" placeholder="e.g. 616" />
+        </div>
+        <div class="field-row">
+          <label for="freight-rate">Freight rate ($/lb)</label>
+          <input type="number" id="freight-rate" step="0.01" min="0" placeholder="1.05" />
+        </div>
+      </div>
+
+      <div id="dollar-inputs" style="display:none">
+        <div class="field-row">
+          <label for="freight-dollars">Freight $ total</label>
+          <input type="number" id="freight-dollars" step="0.01" min="0" placeholder="e.g. 585.90" />
+        </div>
+      </div>
+
+      <div class="field-row">
+        <label for="wetlock-qty">Wetlock qty (cases)</label>
+        <input type="number" id="wetlock-qty" step="1" min="0" placeholder="e.g. 10" />
+      </div>
+      <div class="field-row">
+        <label for="wetlock-price">Wetlock unit price ($/case)</label>
+        <input type="number" id="wetlock-price" step="0.01" min="0" placeholder="6.50" />
+      </div>
+      <div class="field-row">
+        <label for="total-cases">Total cases shipped</label>
+        <input type="number" id="total-cases" step="1" min="0" placeholder="defaults to wetlock qty" />
+      </div>
+    </fieldset>
+  </div>
+
+  <div class="card">
+    <div class="row-2col">
+      <fieldset>
+        <legend>16oz jars</legend>
+        <div class="field-row">
+          <label for="qty16">Qty (jars)</label>
+          <input type="number" id="qty16" step="1" min="0" placeholder="0" />
+        </div>
+        <div class="field-row">
+          <label for="cost16">Base cost / jar</label>
+          <input type="number" id="cost16" step="0.0001" min="0" placeholder="0.00" />
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>10oz jars</legend>
+        <div class="field-row">
+          <label for="qty10">Qty (jars)</label>
+          <input type="number" id="qty10" step="1" min="0" placeholder="0" />
+        </div>
+        <div class="field-row">
+          <label for="cost10">Base cost / jar</label>
+          <input type="number" id="cost10" step="0.0001" min="0" placeholder="0.00" />
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>4# tubs</legend>
+        <div class="field-row">
+          <label for="qty4">Qty (tubs)</label>
+          <input type="number" id="qty4" step="1" min="0" placeholder="0" />
+        </div>
+        <div class="field-row">
+          <label for="cost4">Base cost / tub</label>
+          <input type="number" id="cost4" step="0.0001" min="0" placeholder="0.00" />
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Shell oysters</legend>
+        <div class="field-row">
+          <label for="qty-shell">Qty (cases)</label>
+          <input type="number" id="qty-shell" step="1" min="0" placeholder="0" />
+        </div>
+        <div class="field-row">
+          <label for="cost-shell">Base cost / case</label>
+          <input type="number" id="cost-shell" step="0.0001" min="0" placeholder="0.00" />
+        </div>
+      </fieldset>
+    </div>
+  </div>
+
+  <button type="submit">Calculate</button>
+</form>
+
+<div id="results" style="margin-top:1.5rem;"></div>
+
+<script type="module">
+  import { calculate } from "./src/core/calculator.js";
+  import { validate } from "./src/core/validators.js";
+  import { renderResults, renderErrors } from "./src/ui/renderer.js";
+  import { loadSettings, saveSettings } from "./src/ui/settings.js";
+
+  // Load persisted settings
+  const settings = loadSettings();
+  document.getElementById("s-rate").value      = settings.freightRate;
+  document.getElementById("s-wetlock").value   = settings.wetlockUnitPrice;
+  document.getElementById("s-decimals").value  = settings.decimals;
+  document.getElementById("freight-rate").value    = settings.freightRate;
+  document.getElementById("wetlock-price").value   = settings.wetlockUnitPrice;
+
+  // Save settings
+  document.getElementById("save-settings-btn").addEventListener("click", () => {
+    const s = {
+      freightRate:      parseFloat(document.getElementById("s-rate").value),
+      wetlockUnitPrice: parseFloat(document.getElementById("s-wetlock").value),
+      decimals:         parseInt(document.getElementById("s-decimals").value, 10),
+    };
+    saveSettings(s);
+    document.getElementById("freight-rate").value  = s.freightRate;
+    document.getElementById("wetlock-price").value = s.wetlockUnitPrice;
+    alert("Defaults saved.");
+  });
+
+  // Freight mode toggle
+  const freightModeEl = document.getElementById("freight-mode");
+  freightModeEl.addEventListener("change", () => {
+    const isWeight = freightModeEl.value === "weight";
+    document.getElementById("weight-inputs").style.display  = isWeight ? "" : "none";
+    document.getElementById("dollar-inputs").style.display  = isWeight ? "none" : "";
+  });
+
+  // Auto-fill total cases from wetlock qty
+  document.getElementById("wetlock-qty").addEventListener("input", (e) => {
+    const tc = document.getElementById("total-cases");
+    if (!tc.dataset.userEdited) tc.value = e.target.value;
+  });
+  document.getElementById("total-cases").addEventListener("input", (e) => {
+    e.target.dataset.userEdited = "1";
+  });
+
+  // Form submit
+  document.getElementById("calc-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+
+    const mode = freightModeEl.value;
+    const decimals = parseInt(document.getElementById("s-decimals").value, 10);
+
+    const wetlockQty = parseFloat(document.getElementById("wetlock-qty").value) || 0;
+    const totalCasesRaw = document.getElementById("total-cases").value;
+    const totalCases = totalCasesRaw !== "" ? parseFloat(totalCasesRaw) : wetlockQty;
+
+    const input = {
+      po: document.getElementById("po").value.trim() || "—",
+      freight: mode === "weight"
+        ? {
+            mode: "weight",
+            weight: parseFloat(document.getElementById("billing-weight").value) || 0,
+            rate:   parseFloat(document.getElementById("freight-rate").value) || 0,
+          }
+        : {
+            mode: "dollars",
+            dollars: parseFloat(document.getElementById("freight-dollars").value) || 0,
+          },
+      wetlockQty,
+      wetlockUnitPrice: parseFloat(document.getElementById("wetlock-price").value) || 0,
+      totalCases,
+      items: {
+        qty16:       parseFloat(document.getElementById("qty16").value)   || 0,
+        baseCost16:  parseFloat(document.getElementById("cost16").value)  || 0,
+        qty10:       parseFloat(document.getElementById("qty10").value)   || 0,
+        baseCost10:  parseFloat(document.getElementById("cost10").value)  || 0,
+        qty4:        parseFloat(document.getElementById("qty4").value)    || 0,
+        baseCost4:   parseFloat(document.getElementById("cost4").value)   || 0,
+        qtyShell:    parseFloat(document.getElementById("qty-shell").value) || 0,
+        baseCostShell: parseFloat(document.getElementById("cost-shell").value) || 0,
+      },
+    };
+
+    const errors = validate(input);
+    const hardErrors = errors.filter((e) => !e.startsWith("WARN:"));
+
+    if (hardErrors.length) {
+      renderErrors(errors);
+      return;
+    }
+
+    // Show any warnings then calculate
+    if (errors.length) renderErrors(errors);
+
+    const result = calculate(input);
+    renderResults(result, decimals);
+
+    // Scroll to results
+    document.getElementById("results").scrollIntoView({ behavior: "smooth" });
+  });
+</script>
+</body>
+</html>
