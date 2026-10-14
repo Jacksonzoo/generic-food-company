@@ -1,36 +1,60 @@
+import { SKUS } from "./constants.js";
+
+const NOT_A_NUMBER = "Enter a number.";
+
+function requirePositive(errors, key, value, message) {
+  if (Number.isNaN(value)) errors[key] = NOT_A_NUMBER;
+  else if (!(value > 0)) errors[key] = message;
+}
+
+function requireNonNegative(errors, key, value) {
+  if (Number.isNaN(value)) errors[key] = NOT_A_NUMBER;
+  else if (value < 0) errors[key] = "Can't be negative.";
+}
+
 /**
- * Validate calculator input and return an array of error strings.
- * Empty array means valid.
+ * Validate calculator input field by field.
+ *
+ * Keys are input field names (weight, rate, dollars, wetlockQty, wetlockUnitPrice,
+ * totalCases, qty16, baseCost16, …) plus `items` for "no products entered".
+ * Numeric fields may be NaN when the user typed something unparseable.
  *
  * @param {object} input  Same shape as calculate() input
- * @returns {string[]}
+ * @returns {{ errors: Record<string, string>, warnings: Record<string, string> }}
+ *   Empty `errors` means the input can be calculated. Warnings never block.
  */
-export function validate(input) {
-  const errors = [];
-  const { freight, wetlockQty, wetlockUnitPrice, totalCases, items } = input;
+export function validateInput(input) {
+  const errors = {};
+  const warnings = {};
+  const { freight = {}, wetlockQty, wetlockUnitPrice, totalCases, items = {} } = input;
 
-  if (!freight || !["weight", "dollars"].includes(freight.mode)) {
-    errors.push("Freight mode must be 'weight' or 'dollars'.");
-  } else if (freight.mode === "weight") {
-    if (!(freight.weight > 0)) errors.push("Billing weight must be > 0.");
-    if (!(freight.rate > 0))   errors.push("Freight rate must be > 0.");
+  if (freight.mode === "dollars") {
+    requirePositive(errors, "dollars", freight.dollars, "Enter the freight dollars from the invoice.");
   } else {
-    if (!(freight.dollars > 0)) errors.push("Freight $ must be > 0.");
+    requirePositive(errors, "weight", freight.weight, "Enter the billing weight.");
+    requirePositive(errors, "rate", freight.rate, "Enter a rate above $0.");
   }
 
-  if (!(wetlockQty >= 0)) errors.push("Wetlock qty must be ≥ 0.");
-  if (!(wetlockUnitPrice >= 0)) errors.push("Wetlock unit price must be ≥ 0.");
-  if (!(totalCases > 0)) errors.push("Total cases shipped must be > 0.");
+  requireNonNegative(errors, "wetlockQty", wetlockQty);
+  requireNonNegative(errors, "wetlockUnitPrice", wetlockUnitPrice);
+  requirePositive(errors, "totalCases", totalCases, "Enter the total cases shipped.");
 
-  const { qty4 = 0, qty16 = 0, qty10 = 0, qtyShell = 0 } = items || {};
-  if (qty4 + qty16 + qty10 + qtyShell === 0) {
-    errors.push("At least one item qty must be > 0.");
+  let anyQty = false;
+  for (const { qtyKey, costKey, unit } of SKUS) {
+    const qty = items[qtyKey] ?? 0;
+    const cost = items[costKey] ?? 0;
+    requireNonNegative(errors, qtyKey, qty);
+    requireNonNegative(errors, costKey, cost);
+    if (qty > 0) {
+      anyQty = true;
+      if (!errors[costKey] && !(cost > 0)) errors[costKey] = `Enter the base cost per ${unit}.`;
+    }
+  }
+  if (!anyQty) errors.items = "Enter a quantity for at least one product.";
+
+  if (wetlockQty > 0 && totalCases > 0 && totalCases !== wetlockQty) {
+    warnings.totalCases = `Wetlock qty is ${wetlockQty}. Confirm the case count before using these costs.`;
   }
 
-  // Warn (non-blocking) if totalCases ≠ wetlockQty — returned as an error with "WARN:" prefix
-  if (wetlockQty > 0 && totalCases !== wetlockQty) {
-    errors.push(`WARN: Total cases (${totalCases}) ≠ Wetlock qty (${wetlockQty}). Verify intentional.`);
-  }
-
-  return errors;
+  return { errors, warnings };
 }
