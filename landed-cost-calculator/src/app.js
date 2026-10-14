@@ -11,6 +11,9 @@ import { renderEmpty, renderResults, renderFormFigures } from "./ui/renderer.js"
 import { loadSettings, saveSettings, loadTheme, saveTheme } from "./ui/settings.js";
 import { money, entreeText } from "./ui/format.js";
 import { copyText } from "./ui/clipboard.js";
+import { downloadFile } from "./ui/download.js";
+import { writeXlsx } from "./export/xlsx.js";
+import { buildNfoWorkbook, nfoFileName } from "./export/nfo-workbook.js";
 import { toast } from "./ui/toast.js";
 
 const $ = (id) => document.getElementById(id);
@@ -269,6 +272,7 @@ function wireResultActions() {
       return;
     }
     if (e.target.closest("[data-copy-all]")) return copyAll();
+    if (e.target.closest("[data-export-xlsx]")) return exportExcel();
     if (e.target.closest("[data-print]")) return window.print();
 
     const focusBtn = e.target.closest("[data-focus]");
@@ -300,6 +304,18 @@ async function copyAll() {
   const count = state.result.calc.results.length;
   toast(ok ? `Copied ${count} lot cost${count === 1 ? "" : "s"} for Entree.` : "Couldn't copy to the clipboard.",
     { tone: ok ? "success" : "danger" });
+}
+
+function exportExcel() {
+  if (!state.result) return;
+  const { calc, input } = state.result;
+  const generatedAt = new Date();
+  const book = buildNfoWorkbook({
+    calc, input, notices: buildNotices(input, calc), decimals: state.settings.decimals, generatedAt,
+  });
+  const name = nfoFileName(input.po, generatedAt);
+  downloadFile(writeXlsx(book), name, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+  toast(`Downloaded ${name}`, { tone: "success" });
 }
 
 function flashCopied(btn) {

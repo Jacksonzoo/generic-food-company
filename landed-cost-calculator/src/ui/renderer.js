@@ -154,6 +154,9 @@ function actionsHTML(shortcut) {
       <button type="button" class="btn btn--primary btn--lg" data-copy-all>
         ${icon("copy")}<span>Copy all for Entree</span><kbd>${shortcut}</kbd>
       </button>
+      <button type="button" class="btn btn--secondary btn--lg" data-export-xlsx title="Download an audit-ready Excel workbook">
+        ${icon("sheet")}<span>Excel</span>
+      </button>
       <button type="button" class="btn btn--secondary btn--lg btn--square" data-print aria-label="Print audit sheet" title="Print audit sheet">
         ${icon("printer")}
       </button>

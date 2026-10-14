@@ -94,6 +94,31 @@ keeps the tie-out status and **Copy for Entree** in reach.
   when it changed. Prices are intentionally not editable from the browser, so every computer
   always uses the same list.
 
+## Excel export (audit workbook)
+
+**Excel** in the results panel downloads `PO-<po>_NFO-landed-cost_<date>.xlsx`, one sheet
+written to be read cold by accounts payable and auditors:
+
+| Section | Contents |
+|---------|----------|
+| Header | Title, PO, timestamp, and a status banner: BALANCED / DOES NOT TIE, plus EXCEPTION when a price was overridden. Frozen while scrolling. |
+| 1 Shipment & freight | Every input with the math beside it (weight × rate, boxes × price, per-case rates). |
+| 2 Build-up & reconciliation | Per product: qty, base cost, base total, cases allocated, SP and freight as their own columns (headers show the per-case rate), landed total. |
+| 3 Final lot cost per unit | Base + SP/unit + Freight/unit = final lot cost (the Entree figures, highlighted), price source (list or override), uplift. |
+| 4 Tie-out | Products + SP = invoice, + freight = expected landed total, vs Σ qty × final lot cost; difference and status. |
+| 5 Case allocation | The case math step by step with the rule for each line. |
+| 6 Notes | Exceptions, app notices, and the freight-source rule. |
+
+- **Blue = entered from paperwork, black = formula.** Every calculated cell is a live formula
+  holding the app's result as its cached value, so previews (Outlook, Quick Look) show the
+  right numbers and Excel recomputes identically. This was confirmed by recalculating every
+  confirmed PO in Microsoft Excel and comparing all formula cells (0 mismatches).
+- Products not on the PO stay visible, greyed, with $0 and "Not on PO".
+- Lot costs use the app's decimal setting so the sheet matches what was entered in Entree.
+- Print-ready: landscape, fit to one page wide, footer with PO and page numbers.
+- No library: `src/export/xlsx.js` is a small dependency-free .xlsx writer, so the export
+  works offline and on locked-down machines.
+
 ## Architecture
 
 ```
@@ -111,12 +136,15 @@ landed-cost-calculator/
 │   │   ├── pricing.js                     list-price override checks
 │   │   ├── examples.js                    confirmed PO fixtures
 │   │   └── constants.js                   price list, case sizes, defaults
+│   ├── export/
+│   │   ├── xlsx.js         dependency-free .xlsx writer (styles, formulas, zip)
+│   │   └── nfo-workbook.js audit workbook layout for National Fish & Oyster
 │   └── ui/
 │       ├── form.js       parse/format inputs, form ⇄ input mapping
 │       ├── renderer.js   results panel + live form figures
 │       ├── format.js     money/number formatters, Entree text
 │       ├── settings.js   localStorage preferences
-│       ├── toast.js, clipboard.js
+│       ├── toast.js, clipboard.js, download.js
 └── tests/                Vitest — `npm test` from the repo root
 ```
 
