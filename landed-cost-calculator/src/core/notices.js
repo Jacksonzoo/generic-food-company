@@ -1,4 +1,5 @@
 import { UNITS_PER_CASE, TIE_OUT_TOLERANCE } from "./constants.js";
+import { priceOverrides, priceLabel } from "./pricing.js";
 
 const EPS = 1e-9;
 const SEVERITY = { danger: 0, warning: 1, info: 2 };
@@ -45,6 +46,11 @@ export function buildNotices(input, calc) {
   if (qty10 === 0 && cases10 > EPS) {
     add("orphan-retail", "warning",
       `${n2(cases10)} leftover retail cases have no 10oz jars to absorb their cost.`);
+  }
+
+  for (const { sku, cost } of priceOverrides(input.items)) {
+    add(`override-${sku.key}`, "warning",
+      `${sku.label} base cost ${priceLabel(cost)} overrides the list price of ${priceLabel(sku.listPrice)}.`);
   }
 
   if (wetlockQty > 0 && totalCases !== wetlockQty) {

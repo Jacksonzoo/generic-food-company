@@ -67,11 +67,32 @@ keeps the tie-out status and **Copy for Entree** in reach.
 |------|----------|
 | Step 1 — Shipment & freight | PO #, freight as *Weight × rate* or *Freight $*, and freight source (Maersk invoice / Delta DN wt / AWB). Source is informational and never changes the math. |
 | Step 2 — Wet lock box & cases | Total cases is linked to wetlock qty by default; unlink to enter it by hand. A mismatch warns but doesn't block. |
-| Step 3 — Products | Qty + base cost per SKU with a live extended total and an invoice footer (products + SP). |
+| Step 3 — Products | Qty + base cost per SKU with a live extended total and an invoice footer (products + SP). Base costs are locked to the price list (see below). |
 | Validation | Errors show once a field has been edited and left, or for every field after **Calculate**. Typos like `92x6` are rejected instead of truncated. Money fields format to 2+ decimals on blur. |
 | Results | Notices, lot cost per SKU (Base + SP + Freight, uplift %), copy per SKU, copy all, shipment KPIs, tie-out, and an allocation audit trail with a case bar. |
 | Notices | `src/core/notices.js` explains problems in plain language: tie-out failure, fixed cases exceeding cases shipped, 16oz capped, no room for 10oz, orphaned retail cases, case mismatch, partial 4# case, non-invoice freight source. |
 | Tools | Examples menu, Reset (with Undo), light/dark theme, Defaults dialog, print-ready audit sheet, `⌘/Ctrl + Shift + E` to copy all for Entree. |
+
+## Price list (locked base costs)
+
+| Product | List price |
+|---------|-----------|
+| 16oz jars | $8.05 / jar |
+| 10oz jars | $5.35 / jar |
+| 4# tubs | $29.20 / tub |
+| Shell oysters | $72.00 / case |
+
+- **Locked by default.** Base cost fields are pre-filled from `listPrice` in `src/core/constants.js`,
+  read-only, and skipped by Tab, so a normal PO only needs quantities.
+- **One-off override.** Click the lock to edit a price for the current PO. The field shows
+  "Changed from list price", the results show an override notice and an `OVERRIDE` tag on the
+  lot card, and both appear on the printed audit sheet. Clicking the lock again (or Reset)
+  restores the list price. Overrides are never saved.
+- **Permanent price change.** Edit `listPrice` in `src/core/constants.js` *and* the pinned
+  expectation in `tests/pricing.test.js`, then commit and deploy. Requiring both edits is
+  deliberate: it keeps a price change from happening by accident, and git history records
+  when it changed. Prices are intentionally not editable from the browser, so every computer
+  always uses the same list.
 
 ## Architecture
 
@@ -87,8 +108,9 @@ landed-cost-calculator/
 │   │   ├── allocation.js, calculator.js   the math contract (unchanged)
 │   │   ├── validators.js                  field-level errors + warnings
 │   │   ├── notices.js                     plain-language findings
+│   │   ├── pricing.js                     list-price override checks
 │   │   ├── examples.js                    confirmed PO fixtures
-│   │   └── constants.js
+│   │   └── constants.js                   price list, case sizes, defaults
 │   └── ui/
 │       ├── form.js       parse/format inputs, form ⇄ input mapping
 │       ├── renderer.js   results panel + live form figures

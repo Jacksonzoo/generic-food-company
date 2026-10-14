@@ -12,11 +12,16 @@ export const UNITS_PER_CASE = {
 };
 
 // Products in display order. `label` matches the `sku` strings returned by calculate().
+//
+// `listPrice` is the company price list: the base cost each form field is locked to.
+// To change a price permanently, edit it here and commit. Every browser picks it up
+// on the next deploy, and git history records who changed it and when. One-off
+// prices for a single PO are entered by unlocking the field in the app instead.
 export const SKUS = [
-  { key: "16oz",  label: "16oz jars",     unit: "jar",  qtyKey: "qty16",    costKey: "baseCost16",    pack: "48 per case" },
-  { key: "10oz",  label: "10oz jars",     unit: "jar",  qtyKey: "qty10",    costKey: "baseCost10",    pack: "Fills leftover retail space" },
-  { key: "4lb",   label: "4# tubs",       unit: "tub",  qtyKey: "qty4",     costKey: "baseCost4",     pack: "12 per case" },
-  { key: "shell", label: "Shell oysters", unit: "case", qtyKey: "qtyShell", costKey: "baseCostShell", pack: "Qty is cases" },
+  { key: "16oz",  label: "16oz jars",     unit: "jar",  qtyKey: "qty16",    costKey: "baseCost16",    listPrice: 8.05,  pack: "48 per case" },
+  { key: "10oz",  label: "10oz jars",     unit: "jar",  qtyKey: "qty10",    costKey: "baseCost10",    listPrice: 5.35,  pack: "Fills leftover retail space" },
+  { key: "4lb",   label: "4# tubs",       unit: "tub",  qtyKey: "qty4",     costKey: "baseCost4",     listPrice: 29.20, pack: "12 per case" },
+  { key: "shell", label: "Shell oysters", unit: "case", qtyKey: "qtyShell", costKey: "baseCostShell", listPrice: 72.00, pack: "Qty is cases" },
 ];
 
 // Freight paperwork, in order of preference (informational only — never changes the math)

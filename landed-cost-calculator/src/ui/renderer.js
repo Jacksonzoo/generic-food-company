@@ -1,4 +1,5 @@
 import { SKUS, FREIGHT_SOURCES } from "../core/constants.js";
+import { isOverride, priceLabel } from "../core/pricing.js";
 import { money, fixed, quantity, percent, plural, escapeHtml } from "./format.js";
 
 const icon = (name, cls = "icon") => `<svg class="${cls}" aria-hidden="true"><use href="#i-${name}"/></svg>`;
@@ -114,6 +115,7 @@ function lotsHTML(calc, d) {
     const sku = SKU_BY_LABEL[r.sku];
     const final = fixed(r.finalCost, d);
     const uplift = r.baseCost > 0 ? (r.finalCost - r.baseCost) / r.baseCost : 0;
+    const overridden = isOverride(sku, r.baseCost);
     return `
       <li class="lot" style="--sku: var(--sku-${sku.key})">
         <div class="lot__head">
@@ -128,7 +130,10 @@ function lotsHTML(calc, d) {
             aria-label="Copy ${r.sku} lot cost ${final}" title="Copy lot cost">${icon("copy")}</button>
         </div>
         <dl class="lot__parts">
-          <div><dt>Base</dt><dd class="num">${fixed(r.baseCost, d)}</dd></div>
+          <div>
+            <dt>Base${overridden ? ` <span class="tag" title="List price ${priceLabel(sku.listPrice)}">override</span>` : ""}</dt>
+            <dd class="num">${fixed(r.baseCost, d)}</dd>
+          </div>
           <div><dt>+ SP</dt><dd class="num">${fixed(r.wetlockAddPerUnit, d)}</dd></div>
           <div><dt>+ Freight</dt><dd class="num">${fixed(r.freightAddPerUnit, d)}</dd></div>
           <div class="lot__uplift"><dt>Uplift</dt><dd class="num">${percent(uplift)}</dd></div>

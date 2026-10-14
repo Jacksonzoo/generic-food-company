@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { parseNumber, formatMoneyInput, buildInput, valuesFromInput, emptyValues } from "../src/ui/form.js";
+import { parseNumber, formatMoneyInput, buildInput, valuesFromInput, emptyValues, isAtListPrice } from "../src/ui/form.js";
 import { calculate } from "../src/core/calculator.js";
 import { EXAMPLES } from "../src/core/examples.js";
-import { DEFAULTS } from "../src/core/constants.js";
+import { DEFAULTS, SKUS } from "../src/core/constants.js";
 
 describe("parseNumber", () => {
   it.each([
@@ -65,6 +65,20 @@ describe("emptyValues", () => {
     expect(values.rate).toBe("1.10");
     expect(values.wetlockUnitPrice).toBe("7.00");
     expect(values.qty16).toBe("");
+  });
+
+  it("pre-fills every base cost from the price list", () => {
+    const values = emptyValues(DEFAULTS);
+    expect([values.baseCost16, values.baseCost10, values.baseCost4, values.baseCostShell])
+      .toEqual(["8.05", "5.35", "29.20", "72.00"]);
+  });
+});
+
+describe("isAtListPrice", () => {
+  const tubs = SKUS.find((s) => s.key === "4lb");
+
+  it.each([["29.20", true], ["29.2", true], ["", true], ["29.25", false], ["abc", false]])("%j → %s", (raw, expected) => {
+    expect(isAtListPrice(tubs, raw)).toBe(expected);
   });
 });
 

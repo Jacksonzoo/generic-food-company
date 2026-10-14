@@ -85,13 +85,22 @@ export function valuesFromInput(input) {
   return values;
 }
 
-/** A cleared form that keeps the user's saved defaults. */
+/** A cleared form that keeps the user's saved defaults and the company price list. */
 export function emptyValues(settings) {
   const values = { mode: "weight", source: "maersk" };
   for (const key of Object.keys(FIELD_IDS)) values[key] = "";
   values.rate = formatMoneyInput(settings.freightRate);
   values.wetlockUnitPrice = formatMoneyInput(settings.wetlockUnitPrice);
+  for (const sku of SKUS) values[sku.costKey] = formatMoneyInput(sku.listPrice);
   return values;
+}
+
+/**
+ * Whether a base cost field should be (re)locked after loading values:
+ * blank or equal to the list price means nothing was deliberately overridden.
+ */
+export function isAtListPrice(sku, raw) {
+  return String(raw ?? "").trim() === "" || parseNumber(raw) === sku.listPrice;
 }
 
 export function readValues(doc = document) {

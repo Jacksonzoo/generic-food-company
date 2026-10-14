@@ -3,7 +3,10 @@ import { validateInput } from "./core/validators.js";
 import { buildNotices } from "./core/notices.js";
 import { EXAMPLES, matchesExpected } from "./core/examples.js";
 import { SKUS, TIE_OUT_TOLERANCE } from "./core/constants.js";
-import { FIELD_IDS, readValues, writeValues, buildInput, valuesFromInput, emptyValues, formatMoneyInput } from "./ui/form.js";
+import { isOverride, priceLabel } from "./core/pricing.js";
+import {
+  FIELD_IDS, readValues, writeValues, buildInput, valuesFromInput, emptyValues, formatMoneyInput, isAtListPrice,
+} from "./ui/form.js";
 import { renderEmpty, renderResults, renderFormFigures } from "./ui/renderer.js";
 import { loadSettings, saveSettings, loadTheme, saveTheme } from "./ui/settings.js";
 import { money, entreeText } from "./ui/format.js";
@@ -29,6 +32,7 @@ const state = {
   touched: new Set(),   // field keys whose errors may show (edited, then left)
   showAll: false,       // set by Calculate: reveal every error, not just touched ones
   linked: true,         // total cases mirrors wetlock qty
+  unlocked: new Set(),  // SKU keys whose base cost is overridden for this PO
   allocOpen: false,
   result: null,         // { calc, input } when the form is calculable
 };
@@ -41,11 +45,25 @@ function update() {
     $("total-cases").value = values.wetlockQty;
     values.totalCases = values.wetlockQty;
   }
+  for (const sku of SKUS) {
+    if (state.unlocked.has(sku.key)) continue;
+    values[sku.costKey] = formatMoneyInput(sku.listPrice);
+    $(FIELD_IDS[sku.costKey]).value = values[sku.costKey];
+  }
 
   const input = buildInput(values);
   const { errors, warnings } = validateInput(input);
 
-  showFieldMessages(errors, warnings);
+  // Unlocked prices that differ from the list get an amber "changed" note, styled like a warning
+  const notes = { ...warnings };
+  for (const sku of SKUS) {
+    const cost = input.items[sku.costKey];
+    if (state.unlocked.has(sku.key) && cost > 0 && isOverride(sku, cost)) {
+      notes[sku.costKey] = `Changed from list price ${priceLabel(sku.listPrice)}`;
+    }
+  }
+
+  showFieldMessages(errors, notes);
   renderFormFigures(input, errors);
   $("results-po").textContent = input.po ? `PO ${input.po}` : "No PO entered";
 
@@ -156,6 +174,55 @@ function wireForm() {
     if (!state.linked) $("total-cases").focus();
     update();
   });
+
+  let lockHintShown = 0;
+  form.addEventListener("click", (e) => {
+    const lockBtn = e.target.closest("[data-lock]");
+    if (lockBtn) {
+      toggleLock(SKUS.find((s) => s.key === lockBtn.dataset.lock));
+      return;
+    }
+    // Clicking a locked price explains how to change it (at most every few seconds)
+    if (e.target.matches(".input[readonly][data-money]") && Date.now() - lockHintShown > 4000) {
+      lockHintShown = Date.now();
+      toast("This price is locked to the company list. Click the lock to override it for this PO.");
+    }
+  });
+}
+
+function toggleLock(sku) {
+  const input = $(FIELD_IDS[sku.costKey]);
+  if (state.unlocked.has(sku.key)) {
+    const changed = isOverride(sku, parseFloat(input.value));
+    state.unlocked.delete(sku.key);
+    syncLocks();
+    update();
+    if (changed) toast(`${sku.label} is back to the list price of ${priceLabel(sku.listPrice)}.`);
+  } else {
+    state.unlocked.add(sku.key);
+    syncLocks();
+    update();
+    input.focus();
+    input.select();
+  }
+}
+
+function syncLocks() {
+  for (const sku of SKUS) {
+    const locked = !state.unlocked.has(sku.key);
+    const input = $(FIELD_IDS[sku.costKey]);
+    const btn = document.querySelector(`[data-lock="${sku.key}"]`);
+    input.readOnly = locked;
+    input.tabIndex = locked ? -1 : 0; // keep Tab moving between quantities while prices are locked
+    btn.setAttribute("aria-pressed", String(locked));
+    btn.setAttribute("aria-label", locked
+      ? `Unlock ${sku.label} base cost to override it for this PO`
+      : `Lock ${sku.label} back to the list price of ${priceLabel(sku.listPrice)}`);
+    btn.title = locked
+      ? "Locked to list price. Click to override for this PO."
+      : `Click to restore the list price (${priceLabel(sku.listPrice)}).`;
+    btn.querySelector("use").setAttribute("href", locked ? "#i-lock" : "#i-unlock");
+  }
 }
 
 function syncFreightMode() {
@@ -178,6 +245,9 @@ function syncLinked() {
 function loadValues(values, { linked }) {
   writeValues(values);
   state.linked = linked;
+  // Anything not at the list price was deliberately overridden, so it stays unlocked
+  state.unlocked = new Set(SKUS.filter((s) => !isAtListPrice(s, values[s.costKey])).map((s) => s.key));
+  syncLocks();
   state.edited.clear();
   state.touched.clear();
   state.showAll = false;
@@ -411,6 +481,7 @@ function init() {
   wireShortcuts();
   syncFreightMode();
   syncLinked();
+  syncLocks();
   update();
 }
 
