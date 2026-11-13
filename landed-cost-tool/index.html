@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Landed Cost Tool</title>
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <h1>Landed Cost Tool</h1>
+    <nav class="mode-nav">
+      <button class="mode-btn active" type="button">Mode 1 — General Landed Cost</button>
+      <button class="mode-btn" type="button" disabled title="Coming soon">Mode 2 — National Fish &amp; Oyster</button>
+    </nav>
+  </header>
+
+  <main>
+    <section class="card" id="po-header">
+      <h2>PO Header</h2>
+      <div class="field-row">
+        <label>PO Number <span class="req">*</span>
+          <input type="text" id="po-number" placeholder="PO-12345">
+        </label>
+        <label>Vendor Name
+          <input type="text" id="vendor-name" placeholder="Vendor name">
+        </label>
+        <label>Invoice Total to Pay
+          <input type="number" id="invoice-total" min="0" step="0.01" placeholder="0.00">
+        </label>
+      </div>
+    </section>
+
+    <section class="card" id="line-items-section">
+      <div class="card-header">
+        <h2>Line Items</h2>
+        <button type="button" id="add-line-item" class="btn btn-primary">+ Add Line Item</button>
+      </div>
+      <div class="table-wrap">
+        <table id="line-items-table">
+          <thead>
+            <tr>
+              <th>Description</th>
+              <th>Cases Ordered</th>
+              <th>Weight (lb)</th>
+              <th>Unit Cost</th>
+              <th>Driver</th>
+              <th>Line Total</th>
+              <th>Final Lot Cost</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="line-items-body"></tbody>
+        </table>
+      </div>
+      <p class="empty-hint" id="line-items-empty">No line items yet. Click "+ Add Line Item" to start.</p>
+    </section>
+
+    <section class="card" id="supplementals-section">
+      <div class="card-header">
+        <h2>Supplementals</h2>
+        <button type="button" id="add-supplemental" class="btn btn-primary">+ Add Supplemental</button>
+      </div>
+      <div id="supplementals-list"></div>
+      <p class="empty-hint" id="supplementals-empty">No supplementals added. Freight, surcharges, pallet fees, etc. go here.</p>
+    </section>
+
+    <section class="card" id="tie-out-section">
+      <h2>Tie-Out &amp; Reconciliation</h2>
+      <div id="tie-out-panel"></div>
+    </section>
+  </main>
+
+  <footer>
+    <p>Client-side only — nothing is saved. Exports coming in a later step.</p>
+  </footer>
+</div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
