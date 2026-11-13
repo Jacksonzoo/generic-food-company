@@ -2,387 +2,434 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Landed Cost Calculator — A&amp;D</title>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      font-family: system-ui, -apple-system, sans-serif;
-      background: #f4f6f8;
-      color: #1a1a2e;
-      padding: 1.5rem;
-    }
-
-    h1 { font-size: 1.4rem; margin-bottom: 1rem; color: #2d6a4f; }
-    h2 { font-size: 1rem; margin-bottom: 0.5rem; color: #2d6a4f; }
-
-    .card {
-      background: #fff;
-      border-radius: 8px;
-      padding: 1.25rem 1.5rem;
-      margin-bottom: 1rem;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-    }
-
-    fieldset { border: none; padding: 0; margin-bottom: 1rem; }
-    legend { font-weight: 600; font-size: 0.95rem; margin-bottom: 0.6rem; color: #2d6a4f; }
-
-    .field-row {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      margin-bottom: 0.55rem;
-      flex-wrap: wrap;
-    }
-
-    label { min-width: 200px; font-size: 0.88rem; }
-    input[type="number"], input[type="text"], select {
-      padding: 0.3rem 0.5rem;
-      border: 1px solid #c4c9d4;
-      border-radius: 4px;
-      font-size: 0.9rem;
-      width: 140px;
-    }
-
-    .row-2col { display: flex; gap: 2rem; flex-wrap: wrap; }
-    .row-2col fieldset { flex: 1; min-width: 280px; }
-
-    button[type="submit"] {
-      background: #2d6a4f;
-      color: #fff;
-      border: none;
-      padding: 0.65rem 2rem;
-      border-radius: 6px;
-      font-size: 1rem;
-      cursor: pointer;
-      margin-top: 0.5rem;
-    }
-    button[type="submit"]:hover { background: #1b4332; }
-
-    /* Results */
-    .summary-card, .results-card, .tieout-card, .details-card, .entree-card {
-      background: #fff;
-      border-radius: 8px;
-      padding: 1.25rem 1.5rem;
-      margin-bottom: 1rem;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-    }
-
-    .summary-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-    .summary-table th, .summary-table td {
-      padding: 0.35rem 0.6rem;
-      border-bottom: 1px solid #eef0f4;
-      text-align: left;
-    }
-    .summary-table th { color: #555; font-weight: 500; width: 55%; }
-
-    .results-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
-    .results-table th, .results-table td {
-      padding: 0.4rem 0.6rem;
-      border-bottom: 1px solid #eef0f4;
-      text-align: left;
-    }
-    .results-table th { background: #f0f4f0; font-weight: 600; }
-
-    .final-cost { font-size: 1rem; color: #1b4332; }
-    .formula { color: #666; font-size: 0.8rem; }
-
-    .copy-btn {
-      background: #e8f5e9;
-      border: 1px solid #a5d6a7;
-      border-radius: 4px;
-      padding: 0.15rem 0.5rem;
-      cursor: pointer;
-      font-size: 0.78rem;
-      margin-left: 0.5rem;
-    }
-    .copy-btn:hover { background: #c8e6c9; }
-
-    pre#entree-block {
-      background: #f4f6f8;
-      padding: 0.75rem 1rem;
-      border-radius: 4px;
-      font-size: 0.9rem;
-      margin-bottom: 0.5rem;
-      white-space: pre-wrap;
-    }
-
-    #copy-entree-btn {
-      background: #2d6a4f;
-      color: #fff;
-      border: none;
-      padding: 0.4rem 1.2rem;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 0.88rem;
-    }
-    #copy-entree-btn:hover { background: #1b4332; }
-
-    .error-box {
-      background: #fff3cd;
-      border: 1px solid #ffc107;
-      border-radius: 6px;
-      padding: 0.75rem 1rem;
-      margin-bottom: 0.75rem;
-      font-size: 0.9rem;
-    }
-    .warn-box {
-      background: #fff8e1;
-      border: 1px solid #ffe082;
-      border-radius: 6px;
-      padding: 0.75rem 1rem;
-      margin-bottom: 0.75rem;
-      font-size: 0.88rem;
-    }
-    ul { padding-left: 1.2rem; }
-
-    details summary { cursor: pointer; font-size: 0.88rem; color: #2d6a4f; font-weight: 500; }
-    details[open] .summary-table { margin-top: 0.75rem; }
-
-    .settings-row { display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap; font-size: 0.85rem; color: #555; }
-    .settings-row label { min-width: unset; }
-    .settings-row input, .settings-row select { width: 80px; }
-
-    @media (max-width: 600px) {
-      .row-2col { flex-direction: column; }
-      label { min-width: unset; width: 100%; }
-      input[type="number"], select { width: 100%; }
-    }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Landed Cost Calculator</title>
+  <meta name="description" content="Allocate freight and wet lock box costs into Entree lot costs." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230f766e'/%3E%3Cpath d='M9 12l7-4 7 4v8l-7 4-7-4z M9 12l7 4 7-4 M16 16v8' fill='none' stroke='white' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E" />
+  <script>
+    // Apply a saved theme before first paint to avoid a light/dark flash.
+    try {
+      const t = localStorage.getItem("lcc_theme");
+      if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
+    } catch {}
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
+  <link rel="stylesheet" href="./styles/tokens.css" />
+  <link rel="stylesheet" href="./styles/app.css" />
+  <script type="module" src="./src/app.js"></script>
 </head>
 <body>
 
-<h1>Landed Cost Calculator</h1>
+<!-- Icon sprite (24px grid, stroke icons) -->
+<svg xmlns="http://www.w3.org/2000/svg" hidden>
+  <defs>
+    <symbol id="i-package" viewBox="0 0 24 24"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+    <symbol id="i-check-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></symbol>
+    <symbol id="i-x-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></symbol>
+    <symbol id="i-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><path d="M4 21v-7"/><path d="M4 10V3"/><path d="M12 21v-9"/><path d="M12 8V3"/><path d="M20 21v-5"/><path d="M20 12V3"/><path d="M1 14h6"/><path d="M9 8h6"/><path d="M17 16h6"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></symbol>
+    <symbol id="i-reset" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></symbol>
+    <symbol id="i-printer" viewBox="0 0 24 24"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></symbol>
+    <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></symbol>
+    <symbol id="i-unlink" viewBox="0 0 24 24"><path d="m18.84 12.25 1.72-1.71a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="m5.17 11.75-1.71 1.71a5 5 0 0 0 7.07 7.07l1.71-1.71"/><path d="M8 2v3"/><path d="M2 8h3"/><path d="M16 22v-3"/><path d="M22 16h-3"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+    <symbol id="i-unlock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></symbol>
+    <symbol id="i-sheet" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8"/><path d="M8 17h8"/><path d="M12 11v8"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
+  </defs>
+</svg>
 
-<!-- Settings bar -->
-<div class="card">
-  <div class="settings-row">
-    <label>Default freight rate ($/lb):
-      <input type="number" id="s-rate" step="0.01" min="0" />
-    </label>
-    <label>Default wetlock $/case:
-      <input type="number" id="s-wetlock" step="0.01" min="0" />
-    </label>
-    <label>Decimal places:
-      <select id="s-decimals">
-        <option value="4">4</option>
-        <option value="6">6</option>
-        <option value="7" selected>7</option>
-        <option value="10">10</option>
-      </select>
-    </label>
-    <button id="save-settings-btn" style="background:#2d6a4f;color:#fff;border:none;padding:0.3rem 0.8rem;border-radius:4px;cursor:pointer;font-size:0.82rem;">Save defaults</button>
+<a class="skip-link" href="#results-panel">Skip to results</a>
+
+<header class="app-bar">
+  <div class="app-bar__inner">
+    <div class="brand">
+      <span class="brand__mark"><svg class="icon" aria-hidden="true"><use href="#i-package"/></svg></span>
+      <span class="brand__text">
+        <span class="brand__name">Landed Cost</span>
+        <span class="brand__sub">Entree lot-cost allocation</span>
+      </span>
+    </div>
+
+    <nav class="app-bar__actions" aria-label="Tools">
+      <div class="menu">
+        <button type="button" class="btn btn--ghost" id="examples-btn" aria-haspopup="true" aria-expanded="false" aria-controls="examples-menu">
+          <svg class="icon" aria-hidden="true"><use href="#i-file"/></svg>
+          <span class="hide-sm">Examples</span>
+          <svg class="icon icon--sm" aria-hidden="true"><use href="#i-chevron"/></svg>
+        </button>
+        <div class="menu__panel" id="examples-menu" role="menu" aria-label="Load a confirmed PO" hidden></div>
+      </div>
+      <button type="button" class="btn btn--ghost" id="reset-btn">
+        <svg class="icon" aria-hidden="true"><use href="#i-reset"/></svg>
+        <span class="hide-sm">Reset</span>
+      </button>
+      <span class="app-bar__divider" aria-hidden="true"></span>
+      <button type="button" class="icon-btn" id="theme-btn" aria-label="Switch to dark theme">
+        <svg class="icon" aria-hidden="true"><use href="#i-moon"/></svg>
+      </button>
+      <button type="button" class="icon-btn" id="settings-btn" aria-label="Defaults and display settings" title="Defaults and display settings">
+        <svg class="icon" aria-hidden="true"><use href="#i-settings"/></svg>
+      </button>
+    </nav>
   </div>
+</header>
+
+<main class="layout">
+  <form id="calc-form" class="form-panel" novalidate autocomplete="off">
+    <header class="page-head">
+      <h1>New calculation</h1>
+      <p>Enter the shipment as it appears on the paperwork. Lot costs update as you type.</p>
+    </header>
+
+    <!-- Step 1 -->
+    <section class="card" aria-labelledby="s1-title">
+      <header class="card__head">
+        <span class="step" aria-hidden="true">1</span>
+        <div>
+          <h2 id="s1-title">Shipment &amp; freight</h2>
+          <p class="card__desc">Use the weight or cost the freight invoice is billed on.</p>
+        </div>
+      </header>
+
+      <div class="card__body">
+        <div class="grid grid--2">
+          <div class="field">
+            <label class="field__label" for="po">PO number</label>
+            <div class="input-group">
+              <span class="input-group__affix">PO</span>
+              <input class="input" id="po" type="text" inputmode="numeric" placeholder="89601" spellcheck="false" />
+            </div>
+          </div>
+
+          <div class="field">
+            <span class="field__label" id="mode-label">Freight entered as</span>
+            <div class="segmented" role="radiogroup" aria-labelledby="mode-label">
+              <label><input type="radio" name="freight-mode" value="weight" checked /><span>Weight × rate</span></label>
+              <label><input type="radio" name="freight-mode" value="dollars" /><span>Freight $</span></label>
+            </div>
+          </div>
+        </div>
+
+        <fieldset class="field">
+          <legend class="field__label">Freight source</legend>
+          <div class="choices">
+            <label class="choice">
+              <input type="radio" name="freight-source" value="maersk" checked />
+              <span class="choice__body"><span class="choice__title">Maersk invoice</span><span class="choice__hint">Preferred</span></span>
+            </label>
+            <label class="choice">
+              <input type="radio" name="freight-source" value="delta" />
+              <span class="choice__body"><span class="choice__title">Delta DN wt</span><span class="choice__hint">Proxy until invoice</span></span>
+            </label>
+            <label class="choice">
+              <input type="radio" name="freight-source" value="awb" />
+              <span class="choice__body"><span class="choice__title">AWB chargeable</span><span class="choice__hint">Last resort</span></span>
+            </label>
+          </div>
+        </fieldset>
+
+        <div class="grid grid--2" id="weight-inputs">
+          <div class="field">
+            <label class="field__label" for="billing-weight">Billing weight</label>
+            <div class="input-group">
+              <input class="input num" id="billing-weight" type="text" inputmode="decimal" placeholder="616" aria-describedby="billing-weight-msg" />
+              <span class="input-group__affix">lb</span>
+            </div>
+            <p class="field__msg" id="billing-weight-msg"></p>
+          </div>
+          <div class="field">
+            <label class="field__label" for="freight-rate">Freight rate</label>
+            <div class="input-group">
+              <span class="input-group__affix">$</span>
+              <input class="input num" id="freight-rate" type="text" data-money inputmode="decimal" placeholder="1.05" aria-describedby="freight-rate-msg" />
+              <span class="input-group__affix">/ lb</span>
+            </div>
+            <p class="field__msg" id="freight-rate-msg"></p>
+          </div>
+        </div>
+
+        <div class="grid grid--2" id="dollar-inputs" hidden>
+          <div class="field">
+            <label class="field__label" for="freight-dollars">Freight total</label>
+            <div class="input-group">
+              <span class="input-group__affix">$</span>
+              <input class="input num" id="freight-dollars" type="text" data-money inputmode="decimal" placeholder="585.90" aria-describedby="freight-dollars-msg" />
+            </div>
+            <p class="field__msg" id="freight-dollars-msg"></p>
+          </div>
+        </div>
+
+        <p class="figure" id="freight-figure"></p>
+      </div>
+    </section>
+
+    <!-- Step 2 -->
+    <section class="card" aria-labelledby="s2-title">
+      <header class="card__head">
+        <span class="step" aria-hidden="true">2</span>
+        <div>
+          <h2 id="s2-title">Wet lock box (SP) &amp; cases</h2>
+          <p class="card__desc">SP is charged per case and spread across every case shipped.</p>
+        </div>
+      </header>
+
+      <div class="card__body">
+        <div class="grid grid--3">
+          <div class="field">
+            <label class="field__label" for="wetlock-qty">Wetlock qty</label>
+            <div class="input-group">
+              <input class="input num" id="wetlock-qty" type="text" inputmode="numeric" placeholder="10" aria-describedby="wetlock-qty-msg" />
+              <span class="input-group__affix">cases</span>
+            </div>
+            <p class="field__msg" id="wetlock-qty-msg"></p>
+          </div>
+          <div class="field">
+            <label class="field__label" for="wetlock-price">Price per case</label>
+            <div class="input-group">
+              <span class="input-group__affix">$</span>
+              <input class="input num" id="wetlock-price" type="text" data-money inputmode="decimal" placeholder="6.50" aria-describedby="wetlock-price-msg" />
+            </div>
+            <p class="field__msg" id="wetlock-price-msg"></p>
+          </div>
+          <div class="field">
+            <label class="field__label" for="total-cases">Total cases shipped</label>
+            <div class="input-group">
+              <input class="input num" id="total-cases" type="text" inputmode="numeric" placeholder="10" aria-describedby="total-cases-hint total-cases-msg" />
+              <button type="button" class="input-group__btn" id="link-btn" aria-pressed="true" aria-label="Unlink from wetlock qty to edit">
+                <svg class="icon" aria-hidden="true"><use href="#i-link"/></svg>
+              </button>
+            </div>
+            <p class="field__hint" id="total-cases-hint">Matches wetlock qty</p>
+            <p class="field__msg" id="total-cases-msg"></p>
+          </div>
+        </div>
+
+        <p class="figure" id="sp-figure"></p>
+      </div>
+    </section>
+
+    <!-- Step 3 -->
+    <section class="card" aria-labelledby="s3-title">
+      <header class="card__head">
+        <span class="step" aria-hidden="true">3</span>
+        <div>
+          <h2 id="s3-title">Products</h2>
+          <p class="card__desc">Base costs are locked to the company price list. Click the lock to override a price for this PO only.</p>
+        </div>
+      </header>
+
+      <div class="card__body card__body--flush">
+        <div class="products" role="group" aria-labelledby="s3-title">
+          <div class="products__head" aria-hidden="true">
+            <span>Product</span><span>Qty</span><span>Base cost (list)</span><span class="products__ext-head">Extended</span>
+          </div>
+
+          <div class="product" data-sku="16oz" style="--sku: var(--sku-16oz)">
+            <div class="product__name">
+              <span class="sku-dot" aria-hidden="true"></span>
+              <span><span class="product__title">16oz jars</span><span class="product__pack">48 per case</span></span>
+            </div>
+            <div class="field field--cell">
+              <label class="sr-only" for="qty16">16oz jars quantity</label>
+              <div class="input-group">
+                <input class="input num" id="qty16" type="text" inputmode="numeric" placeholder="0" aria-describedby="qty16-msg" />
+                <span class="input-group__affix">jars</span>
+              </div>
+              <p class="field__msg" id="qty16-msg"></p>
+            </div>
+            <div class="field field--cell">
+              <label class="sr-only" for="cost16">16oz jars base cost per jar</label>
+              <div class="input-group">
+                <span class="input-group__affix">$</span>
+                <input class="input num" id="cost16" type="text" data-money inputmode="decimal" placeholder="0.00" aria-describedby="cost16-msg" />
+                <button type="button" class="input-group__btn" data-lock="16oz" aria-pressed="true" aria-label="Unlock 16oz jars base cost to override it for this PO" title="Locked to list price. Click to override for this PO."><svg class="icon" aria-hidden="true"><use href="#i-lock"/></svg></button>
+              </div>
+              <p class="field__msg" id="cost16-msg"></p>
+            </div>
+            <output class="product__ext num" id="ext-16oz">—</output>
+          </div>
+
+          <div class="product" data-sku="10oz" style="--sku: var(--sku-10oz)">
+            <div class="product__name">
+              <span class="sku-dot" aria-hidden="true"></span>
+              <span><span class="product__title">10oz jars</span><span class="product__pack">Fills leftover retail space</span></span>
+            </div>
+            <div class="field field--cell">
+              <label class="sr-only" for="qty10">10oz jars quantity</label>
+              <div class="input-group">
+                <input class="input num" id="qty10" type="text" inputmode="numeric" placeholder="0" aria-describedby="qty10-msg" />
+                <span class="input-group__affix">jars</span>
+              </div>
+              <p class="field__msg" id="qty10-msg"></p>
+            </div>
+            <div class="field field--cell">
+              <label class="sr-only" for="cost10">10oz jars base cost per jar</label>
+              <div class="input-group">
+                <span class="input-group__affix">$</span>
+                <input class="input num" id="cost10" type="text" data-money inputmode="decimal" placeholder="0.00" aria-describedby="cost10-msg" />
+                <button type="button" class="input-group__btn" data-lock="10oz" aria-pressed="true" aria-label="Unlock 10oz jars base cost to override it for this PO" title="Locked to list price. Click to override for this PO."><svg class="icon" aria-hidden="true"><use href="#i-lock"/></svg></button>
+              </div>
+              <p class="field__msg" id="cost10-msg"></p>
+            </div>
+            <output class="product__ext num" id="ext-10oz">—</output>
+          </div>
+
+          <div class="product" data-sku="4lb" style="--sku: var(--sku-4lb)">
+            <div class="product__name">
+              <span class="sku-dot" aria-hidden="true"></span>
+              <span><span class="product__title">4# tubs</span><span class="product__pack">12 per case</span></span>
+            </div>
+            <div class="field field--cell">
+              <label class="sr-only" for="qty4">4# tubs quantity</label>
+              <div class="input-group">
+                <input class="input num" id="qty4" type="text" inputmode="numeric" placeholder="0" aria-describedby="qty4-msg" />
+                <span class="input-group__affix">tubs</span>
+              </div>
+              <p class="field__msg" id="qty4-msg"></p>
+            </div>
+            <div class="field field--cell">
+              <label class="sr-only" for="cost4">4# tubs base cost per tub</label>
+              <div class="input-group">
+                <span class="input-group__affix">$</span>
+                <input class="input num" id="cost4" type="text" data-money inputmode="decimal" placeholder="0.00" aria-describedby="cost4-msg" />
+                <button type="button" class="input-group__btn" data-lock="4lb" aria-pressed="true" aria-label="Unlock 4# tubs base cost to override it for this PO" title="Locked to list price. Click to override for this PO."><svg class="icon" aria-hidden="true"><use href="#i-lock"/></svg></button>
+              </div>
+              <p class="field__msg" id="cost4-msg"></p>
+            </div>
+            <output class="product__ext num" id="ext-4lb">—</output>
+          </div>
+
+          <div class="product" data-sku="shell" style="--sku: var(--sku-shell)">
+            <div class="product__name">
+              <span class="sku-dot" aria-hidden="true"></span>
+              <span><span class="product__title">Shell oysters</span><span class="product__pack">Qty is cases</span></span>
+            </div>
+            <div class="field field--cell">
+              <label class="sr-only" for="qty-shell">Shell oysters quantity in cases</label>
+              <div class="input-group">
+                <input class="input num" id="qty-shell" type="text" inputmode="numeric" placeholder="0" aria-describedby="qty-shell-msg" />
+                <span class="input-group__affix">cases</span>
+              </div>
+              <p class="field__msg" id="qty-shell-msg"></p>
+            </div>
+            <div class="field field--cell">
+              <label class="sr-only" for="cost-shell">Shell oysters base cost per case</label>
+              <div class="input-group">
+                <span class="input-group__affix">$</span>
+                <input class="input num" id="cost-shell" type="text" data-money inputmode="decimal" placeholder="0.00" aria-describedby="cost-shell-msg" />
+                <button type="button" class="input-group__btn" data-lock="shell" aria-pressed="true" aria-label="Unlock Shell oysters base cost to override it for this PO" title="Locked to list price. Click to override for this PO."><svg class="icon" aria-hidden="true"><use href="#i-lock"/></svg></button>
+              </div>
+              <p class="field__msg" id="cost-shell-msg"></p>
+            </div>
+            <output class="product__ext num" id="ext-shell">—</output>
+          </div>
+
+          <div class="products__foot" id="invoice-figure"></div>
+        </div>
+        <p class="field__msg products__msg" id="items-msg" role="alert"></p>
+      </div>
+    </section>
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn--primary btn--lg">Calculate lot costs</button>
+      <p class="form-actions__note">Nothing you enter is saved. Only your defaults stay in this browser.</p>
+    </div>
+  </form>
+
+  <aside class="results-panel" id="results-panel" aria-labelledby="results-title" tabindex="-1">
+    <header class="results-head">
+      <div>
+        <h2 id="results-title">Lot costs</h2>
+        <p class="results-head__po" id="results-po">No PO entered</p>
+      </div>
+      <span class="pill" data-status-pill data-tone="neutral">Incomplete</span>
+    </header>
+    <div class="results-body" id="results" aria-live="polite"></div>
+  </aside>
+</main>
+
+<div class="mobile-bar" id="mobile-bar" hidden>
+  <span class="pill" data-status-pill data-tone="neutral">Incomplete</span>
+  <a class="btn btn--ghost" href="#results-panel">View</a>
+  <button type="button" class="btn btn--primary" data-copy-all>
+    <svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg><span>Copy for Entree</span>
+  </button>
 </div>
 
-<form id="calc-form">
-  <div class="card">
-    <fieldset>
-      <legend>Shipment</legend>
+<dialog class="dialog" id="settings-dialog" aria-labelledby="settings-title">
+  <form method="dialog" id="settings-form" novalidate>
+    <header class="dialog__head">
+      <h2 id="settings-title">Defaults &amp; display</h2>
+      <button type="submit" value="cancel" class="icon-btn" aria-label="Close">
+        <svg class="icon" aria-hidden="true"><use href="#i-x"/></svg>
+      </button>
+    </header>
 
-      <div class="field-row">
-        <label for="po">PO #</label>
-        <input type="text" id="po" placeholder="e.g. 89601" />
-      </div>
-
-      <div class="field-row">
-        <label for="freight-mode">Freight input mode</label>
-        <select id="freight-mode">
-          <option value="weight">Weight × Rate</option>
-          <option value="dollars">Freight $ (manual)</option>
-        </select>
-      </div>
-
-      <div id="weight-inputs">
-        <div class="field-row">
-          <label for="billing-weight">Billing weight (lbs)</label>
-          <input type="number" id="billing-weight" step="0.01" min="0" placeholder="e.g. 616" />
+    <div class="dialog__body">
+      <div class="grid grid--2">
+        <div class="field">
+          <label class="field__label" for="s-rate">Default freight rate</label>
+          <div class="input-group">
+            <span class="input-group__affix">$</span>
+            <input class="input num" id="s-rate" type="text" inputmode="decimal" />
+            <span class="input-group__affix">/ lb</span>
+          </div>
         </div>
-        <div class="field-row">
-          <label for="freight-rate">Freight rate ($/lb)</label>
-          <input type="number" id="freight-rate" step="0.01" min="0" placeholder="1.05" />
-        </div>
-      </div>
-
-      <div id="dollar-inputs" style="display:none">
-        <div class="field-row">
-          <label for="freight-dollars">Freight $ total</label>
-          <input type="number" id="freight-dollars" step="0.01" min="0" placeholder="e.g. 585.90" />
+        <div class="field">
+          <label class="field__label" for="s-wetlock">Default wetlock price</label>
+          <div class="input-group">
+            <span class="input-group__affix">$</span>
+            <input class="input num" id="s-wetlock" type="text" inputmode="decimal" />
+            <span class="input-group__affix">/ case</span>
+          </div>
         </div>
       </div>
 
-      <div class="field-row">
-        <label for="wetlock-qty">Wetlock qty (cases)</label>
-        <input type="number" id="wetlock-qty" step="1" min="0" placeholder="e.g. 10" />
-      </div>
-      <div class="field-row">
-        <label for="wetlock-price">Wetlock unit price ($/case)</label>
-        <input type="number" id="wetlock-price" step="0.01" min="0" placeholder="6.50" />
-      </div>
-      <div class="field-row">
-        <label for="total-cases">Total cases shipped</label>
-        <input type="number" id="total-cases" step="1" min="0" placeholder="defaults to wetlock qty" />
-      </div>
-    </fieldset>
-  </div>
-
-  <div class="card">
-    <div class="row-2col">
-      <fieldset>
-        <legend>16oz jars</legend>
-        <div class="field-row">
-          <label for="qty16">Qty (jars)</label>
-          <input type="number" id="qty16" step="1" min="0" placeholder="0" />
-        </div>
-        <div class="field-row">
-          <label for="cost16">Base cost / jar</label>
-          <input type="number" id="cost16" step="0.0001" min="0" placeholder="0.00" />
+      <fieldset class="field">
+        <legend class="field__label">Lot cost decimals</legend>
+        <div class="segmented segmented--full">
+          <label><input type="radio" name="s-decimals" value="4" /><span>4</span></label>
+          <label><input type="radio" name="s-decimals" value="6" /><span>6</span></label>
+          <label><input type="radio" name="s-decimals" value="7" /><span>7</span></label>
+          <label><input type="radio" name="s-decimals" value="10" /><span>10</span></label>
         </div>
       </fieldset>
 
-      <fieldset>
-        <legend>10oz jars</legend>
-        <div class="field-row">
-          <label for="qty10">Qty (jars)</label>
-          <input type="number" id="qty10" step="1" min="0" placeholder="0" />
-        </div>
-        <div class="field-row">
-          <label for="cost10">Base cost / jar</label>
-          <input type="number" id="cost10" step="0.0001" min="0" placeholder="0.00" />
+      <fieldset class="field">
+        <legend class="field__label">Theme</legend>
+        <div class="segmented segmented--full">
+          <label><input type="radio" name="s-theme" value="system" /><span>System</span></label>
+          <label><input type="radio" name="s-theme" value="light" /><span>Light</span></label>
+          <label><input type="radio" name="s-theme" value="dark" /><span>Dark</span></label>
         </div>
       </fieldset>
 
-      <fieldset>
-        <legend>4# tubs</legend>
-        <div class="field-row">
-          <label for="qty4">Qty (tubs)</label>
-          <input type="number" id="qty4" step="1" min="0" placeholder="0" />
-        </div>
-        <div class="field-row">
-          <label for="cost4">Base cost / tub</label>
-          <input type="number" id="cost4" step="0.0001" min="0" placeholder="0.00" />
-        </div>
-      </fieldset>
-
-      <fieldset>
-        <legend>Shell oysters</legend>
-        <div class="field-row">
-          <label for="qty-shell">Qty (cases)</label>
-          <input type="number" id="qty-shell" step="1" min="0" placeholder="0" />
-        </div>
-        <div class="field-row">
-          <label for="cost-shell">Base cost / case</label>
-          <input type="number" id="cost-shell" step="0.0001" min="0" placeholder="0.00" />
-        </div>
-      </fieldset>
+      <p class="field__msg" id="settings-msg" role="alert"></p>
+      <p class="dialog__note">
+        <svg class="icon icon--sm" aria-hidden="true"><use href="#i-info"/></svg>
+        Saved in this browser only. PO entries are never stored.
+      </p>
     </div>
-  </div>
 
-  <button type="submit">Calculate</button>
-</form>
+    <footer class="dialog__foot">
+      <button type="submit" value="cancel" class="btn btn--secondary">Cancel</button>
+      <button type="submit" value="save" class="btn btn--primary">Save defaults</button>
+    </footer>
+  </form>
+</dialog>
 
-<div id="results" style="margin-top:1.5rem;"></div>
+<div class="toast-region" id="toasts" role="status" aria-live="polite"></div>
 
-<script type="module">
-  import { calculate } from "./src/core/calculator.js";
-  import { validate } from "./src/core/validators.js";
-  import { renderResults, renderErrors } from "./src/ui/renderer.js";
-  import { loadSettings, saveSettings } from "./src/ui/settings.js";
-
-  // Load persisted settings
-  const settings = loadSettings();
-  document.getElementById("s-rate").value      = settings.freightRate;
-  document.getElementById("s-wetlock").value   = settings.wetlockUnitPrice;
-  document.getElementById("s-decimals").value  = settings.decimals;
-  document.getElementById("freight-rate").value    = settings.freightRate;
-  document.getElementById("wetlock-price").value   = settings.wetlockUnitPrice;
-
-  // Save settings
-  document.getElementById("save-settings-btn").addEventListener("click", () => {
-    const s = {
-      freightRate:      parseFloat(document.getElementById("s-rate").value),
-      wetlockUnitPrice: parseFloat(document.getElementById("s-wetlock").value),
-      decimals:         parseInt(document.getElementById("s-decimals").value, 10),
-    };
-    saveSettings(s);
-    document.getElementById("freight-rate").value  = s.freightRate;
-    document.getElementById("wetlock-price").value = s.wetlockUnitPrice;
-    alert("Defaults saved.");
-  });
-
-  // Freight mode toggle
-  const freightModeEl = document.getElementById("freight-mode");
-  freightModeEl.addEventListener("change", () => {
-    const isWeight = freightModeEl.value === "weight";
-    document.getElementById("weight-inputs").style.display  = isWeight ? "" : "none";
-    document.getElementById("dollar-inputs").style.display  = isWeight ? "none" : "";
-  });
-
-  // Auto-fill total cases from wetlock qty
-  document.getElementById("wetlock-qty").addEventListener("input", (e) => {
-    const tc = document.getElementById("total-cases");
-    if (!tc.dataset.userEdited) tc.value = e.target.value;
-  });
-  document.getElementById("total-cases").addEventListener("input", (e) => {
-    e.target.dataset.userEdited = "1";
-  });
-
-  // Form submit
-  document.getElementById("calc-form").addEventListener("submit", (e) => {
-    e.preventDefault();
-
-    const mode = freightModeEl.value;
-    const decimals = parseInt(document.getElementById("s-decimals").value, 10);
-
-    const wetlockQty = parseFloat(document.getElementById("wetlock-qty").value) || 0;
-    const totalCasesRaw = document.getElementById("total-cases").value;
-    const totalCases = totalCasesRaw !== "" ? parseFloat(totalCasesRaw) : wetlockQty;
-
-    const input = {
-      po: document.getElementById("po").value.trim() || "—",
-      freight: mode === "weight"
-        ? {
-            mode: "weight",
-            weight: parseFloat(document.getElementById("billing-weight").value) || 0,
-            rate:   parseFloat(document.getElementById("freight-rate").value) || 0,
-          }
-        : {
-            mode: "dollars",
-            dollars: parseFloat(document.getElementById("freight-dollars").value) || 0,
-          },
-      wetlockQty,
-      wetlockUnitPrice: parseFloat(document.getElementById("wetlock-price").value) || 0,
-      totalCases,
-      items: {
-        qty16:       parseFloat(document.getElementById("qty16").value)   || 0,
-        baseCost16:  parseFloat(document.getElementById("cost16").value)  || 0,
-        qty10:       parseFloat(document.getElementById("qty10").value)   || 0,
-        baseCost10:  parseFloat(document.getElementById("cost10").value)  || 0,
-        qty4:        parseFloat(document.getElementById("qty4").value)    || 0,
-        baseCost4:   parseFloat(document.getElementById("cost4").value)   || 0,
-        qtyShell:    parseFloat(document.getElementById("qty-shell").value) || 0,
-        baseCostShell: parseFloat(document.getElementById("cost-shell").value) || 0,
-      },
-    };
-
-    const errors = validate(input);
-    const hardErrors = errors.filter((e) => !e.startsWith("WARN:"));
-
-    if (hardErrors.length) {
-      renderErrors(errors);
-      return;
-    }
-
-    // Show any warnings then calculate
-    if (errors.length) renderErrors(errors);
-
-    const result = calculate(input);
-    renderResults(result, decimals);
-
-    // Scroll to results
-    document.getElementById("results").scrollIntoView({ behavior: "smooth" });
-  });
-</script>
 </body>
 </html>

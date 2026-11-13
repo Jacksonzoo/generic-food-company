@@ -54,10 +54,105 @@ AdjustedTotal         = Σ(qty × finalCost)
 | 89791  | 796×1.05  | 13×6.50  | 13    | 9.5248397   | 6.6773558   | 35.0993590   | —          |
 | 89908  | 926×1.05  | 16×6.50  | 16    | 9.4514323   | 6.6112891   | 34.8057292   | 139.26875  |
 
+These live in `src/core/examples.js`. The same list drives `tests/examples.test.js` and the
+in-app **Examples** menu, which re-checks each PO against its confirmed costs when loaded.
+
+## Interface
+
+Two panes: a three-step entry form (left) and a sticky results panel (right) that
+recalculates on every keystroke. Below 1024px the panels stack and a bottom action bar
+keeps the tie-out status and **Copy for Entree** in reach.
+
+| Area | Behavior |
+|------|----------|
+| Step 1 — Shipment & freight | PO #, freight as *Weight × rate* or *Freight $*, and freight source (Maersk invoice / Delta DN wt / AWB). Source is informational and never changes the math. |
+| Step 2 — Wet lock box & cases | Total cases is linked to wetlock qty by default; unlink to enter it by hand. A mismatch warns but doesn't block. |
+| Step 3 — Products | Qty + base cost per SKU with a live extended total and an invoice footer (products + SP). Base costs are locked to the price list (see below). |
+| Validation | Errors show once a field has been edited and left, or for every field after **Calculate**. Typos like `92x6` are rejected instead of truncated. Money fields format to 2+ decimals on blur. |
+| Results | Notices, lot cost per SKU (Base + SP + Freight, uplift %), copy per SKU, copy all, shipment KPIs, tie-out, and an allocation audit trail with a case bar. |
+| Notices | `src/core/notices.js` explains problems in plain language: tie-out failure, fixed cases exceeding cases shipped, 16oz capped, no room for 10oz, orphaned retail cases, case mismatch, partial 4# case, non-invoice freight source. |
+| Tools | Examples menu, Reset (with Undo), light/dark theme, Defaults dialog, print-ready audit sheet, `⌘/Ctrl + Shift + E` to copy all for Entree. |
+
+## Price list (locked base costs)
+
+| Product | List price |
+|---------|-----------|
+| 16oz jars | $8.05 / jar |
+| 10oz jars | $5.35 / jar |
+| 4# tubs | $29.20 / tub |
+| Shell oysters | $72.00 / case |
+
+- **Locked by default.** Base cost fields are pre-filled from `listPrice` in `src/core/constants.js`,
+  read-only, and skipped by Tab, so a normal PO only needs quantities.
+- **One-off override.** Click the lock to edit a price for the current PO. The field shows
+  "Changed from list price", the results show an override notice and an `OVERRIDE` tag on the
+  lot card, and both appear on the printed audit sheet. Clicking the lock again (or Reset)
+  restores the list price. Overrides are never saved.
+- **Permanent price change.** Edit `listPrice` in `src/core/constants.js` *and* the pinned
+  expectation in `tests/pricing.test.js`, then commit and deploy. Requiring both edits is
+  deliberate: it keeps a price change from happening by accident, and git history records
+  when it changed. Prices are intentionally not editable from the browser, so every computer
+  always uses the same list.
+
+## Excel export (audit workbook)
+
+**Excel** in the results panel downloads `PO-<po>_NFO-landed-cost_<date>.xlsx`, one sheet
+written to be read cold by accounts payable and auditors:
+
+| Section | Contents |
+|---------|----------|
+| Header | Title, PO, timestamp, and a status banner: BALANCED / DOES NOT TIE, plus EXCEPTION when a price was overridden. Frozen while scrolling. |
+| 1 Shipment & freight | Every input with the math beside it (weight × rate, boxes × price, per-case rates). |
+| 2 Build-up & reconciliation | Per product: qty, base cost, base total, cases allocated, SP and freight as their own columns (headers show the per-case rate), landed total. |
+| 3 Final lot cost per unit | Base + SP/unit + Freight/unit = final lot cost (the Entree figures, highlighted), price source (list or override), uplift. |
+| 4 Tie-out | Products + SP = invoice, + freight = expected landed total, vs Σ qty × final lot cost; difference and status. |
+| 5 Case allocation | The case math step by step with the rule for each line. |
+| 6 Notes | Exceptions, app notices, and the freight-source rule. |
+
+- **Blue = entered from paperwork, black = formula.** Every calculated cell is a live formula
+  holding the app's result as its cached value, so previews (Outlook, Quick Look) show the
+  right numbers and Excel recomputes identically. This was confirmed by recalculating every
+  confirmed PO in Microsoft Excel and comparing all formula cells (0 mismatches).
+- Products not on the PO stay visible, greyed, with $0 and "Not on PO".
+- Lot costs use the app's decimal setting so the sheet matches what was entered in Entree.
+- Print-ready: landscape, fit to one page wide, footer with PO and page numbers.
+- No library: `src/export/xlsx.js` is a small dependency-free .xlsx writer, so the export
+  works offline and on locked-down machines.
+
+## Architecture
+
+```
+landed-cost-calculator/
+├── index.html            markup + icon sprite
+├── styles/
+│   ├── tokens.css        design tokens (color, type, spacing, elevation; light + dark)
+│   └── app.css           components, layout, responsive, print
+├── src/
+│   ├── app.js            controller: events, update loop, menus, dialog, shortcuts
+│   ├── core/             pure logic — no DOM
+│   │   ├── allocation.js, calculator.js   the math contract (unchanged)
+│   │   ├── validators.js                  field-level errors + warnings
+│   │   ├── notices.js                     plain-language findings
+│   │   ├── pricing.js                     list-price override checks
+│   │   ├── examples.js                    confirmed PO fixtures
+│   │   └── constants.js                   price list, case sizes, defaults
+│   ├── export/
+│   │   ├── xlsx.js         dependency-free .xlsx writer (styles, formulas, zip)
+│   │   └── nfo-workbook.js audit workbook layout for National Fish & Oyster
+│   └── ui/
+│       ├── form.js       parse/format inputs, form ⇄ input mapping
+│       ├── renderer.js   results panel + live form figures
+│       ├── format.js     money/number formatters, Entree text
+│       ├── settings.js   localStorage preferences
+│       ├── toast.js, clipboard.js, download.js
+└── tests/                Vitest — `npm test` from the repo root
+```
+
 ## Settings (localStorage only)
 - Default freight rate (`lcc_freightRate`)
 - Default wetlock unit price (`lcc_wetlockUnitPrice`)
 - Decimal precision (`lcc_decimals`)
+- Theme (`lcc_theme`, absent = follow system)
 
 No PO data is stored.
 
